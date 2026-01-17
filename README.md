@@ -1,185 +1,218 @@
-# ComEd Price Alert Monitor
+# ComEd Price Monitor
 
-A Python script that monitors ComEd (Commonwealth Edison) hourly electricity prices and sends email alerts when prices cross user-defined thresholds.
-
-## Overview
-
-This script continuously monitors the current hourly average electricity price from ComEd's API and sends email notifications when:
-- The price **exceeds** your high threshold (HIGH alert)
-- The price **drops below** your low threshold (LOW alert)
-
-Perfect for users on ComEd's hourly pricing plan who want to be notified of price changes to optimize their electricity usage.
+A Python script that monitors ComEd hourly electricity prices and sends email alerts when prices cross your specified thresholds.
 
 ## Features
 
-- ✅ Real-time price monitoring from ComEd's official API
-- ✅ Dual threshold alerts (high and low price notifications)
-- ✅ Email notifications with detailed price information
-- ✅ Support for multiple email providers (Gmail, Outlook, Yahoo, custom SMTP)
-- ✅ Email connection testing before monitoring starts
-- ✅ Smart alert system (prevents duplicate alerts)
-- ✅ Automatic alert reset when prices return to normal range
-- ✅ Timestamped price updates every 60 seconds
-- ✅ Graceful error handling and recovery
+- 📊 Real-time monitoring of ComEd hourly electricity prices
+- 📧 Email alerts when prices go above or below your thresholds
+- 👥 Support for multiple email recipients
+- 🔔 Customizable high and low price thresholds
+- 🛑 Stop alerts feature via email link
+- 🔄 Runs continuously in the background
+- 💰 Displays prices in cents (¢)
 
 ## Requirements
 
-- Python 3.6 or higher
-- Internet connection
-- Email account for sending alerts
-- Required Python packages:
-  - `requests`
-  - `pandas`
+- Python 3.6+
+- `requests` library
 
 ## Installation
 
-1. **Clone or download this repository**
+1. Clone this repository:
+```bash
+git clone https://github.com/yourusername/comed-price-monitor.git
+cd comed-price-monitor
+```
 
-2. **Install required packages:**
-   ```bash
-   pip install requests pandas
-   ```
+2. Install required dependencies:
+```bash
+pip3 install requests
+```
 
-   Or if using a requirements file:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Gmail App Password Setup
+
+If using Gmail, you **must** use an App Password (not your regular password):
+
+1. Enable 2-Step Verification: https://myaccount.google.com/security
+2. Create App Password: https://myaccount.google.com/apppasswords
+3. Select "Mail" and "Other (Custom name)"
+4. Copy the 16-character password (no spaces needed in the command)
 
 ## Usage
 
-1. **Run the script:**
-   ```bash
-   python com_ed_api.py
-   ```
+### Basic Usage
 
-2. **Follow the interactive prompts:**
-   - Enter your **high price threshold** (alert when price goes ABOVE this)
-   - Enter your **low price threshold** (alert when price goes BELOW this)
-   - Enter the **recipient email address** (where alerts will be sent)
-   - Select your **email provider** (1-4)
-   - Enter your **sender email address**
-   - Enter your **email password or app password**
+```bash
+python3 comed_tracker.py -u <upper_threshold> -l <lower_threshold> -e <recipient_email>
+```
 
-3. **The script will:**
-   - Test your email connection
-   - Start monitoring prices every 60 seconds
-   - Display current prices in real-time
-   - Send email alerts when thresholds are crossed
+The script will prompt you for sender email and password.
 
-4. **To stop monitoring:**
-   - Press `Ctrl+C` in the terminal
+### Full Command (No Prompts)
 
-## Email Configuration
+```bash
+python3 comed_tracker.py -u 2.8 -l 0 -e "recipient@gmail.com" -s sender@gmail.com -p "your-app-password"
+```
 
-### Gmail Setup
+### Multiple Recipients
 
-**⚠️ IMPORTANT:** Gmail requires an **App Password** (not your regular password).
+```bash
+python3 comed_tracker.py -u 2.8 -l 0 -e "email1@gmail.com, email2@yahoo.com, email3@outlook.com" -s sender@gmail.com -p "your-app-password"
+```
 
-1. Enable **2-Step Verification** on your Google account:
-   - Go to: https://myaccount.google.com/security
+### Negative Thresholds
 
-2. Create an **App Password**:
-   - Go to: https://myaccount.google.com/apppasswords
-   - Select "Mail" and "Other (Custom name)"
-   - Enter a name (e.g., "ComEd Price Monitor")
-   - Copy the 16-character password (spaces or no spaces is fine)
+You can use negative values for the lower threshold:
 
-3. Use this App Password when prompted by the script
+```bash
+python3 comed_tracker.py --upper 3 --lower -0.5 -e "recipient@gmail.com"
+```
 
-### Outlook/Hotmail Setup
+### Command-Line Arguments
 
-- If **2FA is disabled**: Use your regular password
-- If **2FA is enabled**: Generate an App Password from:
-  - https://account.microsoft.com/security
+| Argument | Short | Description | Required |
+|----------|-------|-------------|----------|
+| `--upper` | `-u` | Upper price threshold (alert when price goes ABOVE) | Yes |
+| `--lower` | `-l` | Lower price threshold (alert when price goes BELOW) | Yes |
+| `--email` | `-e` | Recipient email(s), comma-separated | Yes |
+| `--sender` | `-s` | Sender email address | No* |
+| `--password` | `-p` | Sender email password/app password | No* |
+| `--provider` | | Email provider: `gmail`, `outlook`, `yahoo`, `custom` | No (default: gmail) |
+| `--smtp-server` | | Custom SMTP server (if provider is `custom`) | No |
+| `--smtp-port` | | SMTP port | No (default: 587) |
 
-### Yahoo Setup
+*If not provided, the script will prompt for these values.
 
-1. Generate an App Password from your Yahoo account:
-   - Go to: https://login.yahoo.com/account/security
-   - Navigate to App Passwords section
-   - Create a new app password for "Mail"
+## Running in Background
 
-2. Use this App Password when prompted
+### Option 1: Using `nohup` (Simple)
 
-### Custom SMTP Setup
+```bash
+nohup python3 -u comed_tracker.py -u 2.8 -l 0 -e "your@email.com" -s sender@gmail.com -p "app-password" > monitor.log 2>&1 &
+```
 
-If you're using a different email provider:
-- Select option 4 (Other/custom SMTP)
-- Enter your SMTP server address
-- Enter your SMTP port (usually 587 for TLS)
+Check the log:
+```bash
+tail -f monitor.log
+```
+
+Stop the script:
+```bash
+pkill -f comed_tracker.py
+```
+
+### Option 2: Using `screen` (Recommended)
+
+```bash
+# Start a screen session
+screen -S price_monitor
+
+# Run the script
+python3 comed_tracker.py -u 2.8 -l 0 -e "your@email.com" -s sender@gmail.com -p "app-password"
+
+# Detach: Press Ctrl+A then D
+# Reconnect anytime: screen -r price_monitor
+```
+
+### Option 3: Systemd Service (Auto-start on boot)
+
+Create `/etc/systemd/system/comed-monitor.service`:
+
+```ini
+[Unit]
+Description=ComEd Price Monitor
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi
+ExecStart=/usr/bin/python3 /home/pi/comed_tracker.py -u 2.8 -l 0 -e your@email.com -s sender@gmail.com -p "app-password"
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+```bash
+sudo systemctl enable comed-monitor.service
+sudo systemctl start comed-monitor.service
+sudo systemctl status comed-monitor.service
+```
 
 ## How It Works
 
-1. **Price Fetching**: The script queries ComEd's hourly pricing API every 60 seconds
-2. **Threshold Checking**: Compares current price against your high and low thresholds
-3. **Alert Logic**:
-   - Sends an alert when price **first crosses** a threshold
-   - Prevents duplicate alerts while price remains beyond threshold
-   - Resets alert flags when price returns to normal range
-4. **Email Notifications**: Sends formatted email alerts with:
-   - Alert type (HIGH or LOW)
-   - Current price
-   - Threshold value
-   - Timestamp
+1. The script checks the ComEd API every 60 seconds for the current hourly average price
+2. When the price crosses your thresholds, it sends an email alert to all recipients
+3. Each email includes a "Stop Alerts" button that disables future emails
+4. The script continues monitoring until manually stopped
 
-## Example Output
+## Email Alert Examples
 
-```
-[2024-01-15 14:30:00] Current price: $0.08
-[2024-01-15 14:31:00] Current price: $0.12 ⚠️  HIGH ALERT: Price $0.12 is ABOVE threshold $0.10!
-   ✓ Email alert sent to user@example.com
-[2024-01-15 14:32:00] Current price: $0.11
-   ✓ Price has returned below high threshold
-```
+**HIGH Price Alert** - Sent when price goes above your upper threshold
+- Subject: ⚠️ HIGH PRICE ALERT - ¢3.50
+- Includes current price, threshold, and timestamp
+
+**LOW Price Alert** - Sent when price goes below your lower threshold
+- Subject: ⚠️ LOW PRICE ALERT - ¢0.25
+- Includes current price, threshold, and timestamp
+
+## Stopping Alerts
+
+You can stop email alerts in two ways:
+
+1. **Via Email Link**: Click the "🛑 STOP EMAIL ALERTS" button in any alert email
+2. **Stop the Script**: 
+   - If running in foreground: Press `Ctrl+C`
+   - If running with nohup: `pkill -f comed_tracker.py`
+   - If running with screen: `screen -r price_monitor` then `Ctrl+C`
+   - If running as service: `sudo systemctl stop comed-monitor.service`
 
 ## Troubleshooting
 
-### Email Authentication Failed
-
-**For Gmail:**
-- Ensure you're using an App Password (not your regular password)
+### Authentication Failed
+- Make sure you're using an App Password, not your regular Gmail password
 - Verify 2-Step Verification is enabled
-- Double-check the 16-character password (spaces or no spaces is fine)
+- Check that you copied the App Password correctly (16 characters)
 
-**For Outlook/Yahoo:**
-- If 2FA is enabled, use an App Password
-- Verify your account security settings
+### No Log Output with `nohup`
+Use the `-u` flag with Python to disable buffering:
+```bash
+nohup python3 -u comed_tracker.py ... > monitor.log 2>&1 &
+```
 
-**General:**
-- Check your internet connection
-- Verify SMTP server and port settings
-- Ensure your email provider allows SMTP access
+### Port Already in Use
+The script uses port 8080 for the stop alert feature. If unavailable, it tries 8081. This is normal.
 
-### API Connection Issues
+### Negative Threshold Issues
+Use the long form `--lower -0.5` or `--` separator to avoid argument parsing issues.
 
-- Check your internet connection
-- Verify the ComEd API is accessible: https://hourlypricing.comed.com/api?type=currenthouraverage
-- The script will continue retrying on errors
+## Security Notes
 
-### No Data Received
-
-- The API may be temporarily unavailable
-- The script will continue monitoring and retry on the next cycle
-
-## Notes
-
-- The script checks prices every **60 seconds**
-- Alerts are sent only when thresholds are **first crossed** (prevents spam)
-- The script must remain running to continue monitoring
-- For 24/7 monitoring, consider running on a server or using a process manager
-- Prices are displayed in USD per kilowatt-hour (kWh)
-
-## API Reference
-
-The script uses ComEd's public hourly pricing API:
-- **Endpoint**: `https://hourlypricing.comed.com/api?type=currenthouraverage`
-- **Response Format**: JSON array with price and timestamp data
+- **Never commit your passwords or credentials to GitHub**
+- Use App Passwords instead of your main account password
+- Consider using environment variables or config files for credentials
+- Keep your `monitor.log` file private (it may contain email addresses)
 
 ## License
 
-This script is provided as-is for personal use. Please ensure compliance with ComEd's terms of service when using their API.
+MIT License - Feel free to modify and distribute
+
+## Contributing
+
+Pull requests are welcome! For major changes, please open an issue first.
 
 ## Disclaimer
 
-This tool is not affiliated with or endorsed by ComEd. Use at your own discretion. The script is provided for informational purposes only.
+This script is not affiliated with ComEd. Electricity prices are fetched from the public ComEd API. Use at your own risk.
 
+## Support
+
+For issues or questions, please open an issue on GitHub.
+
+---
+
+**Note**: This script checks prices every 60 seconds. You can modify the `time.sleep(60)` value in the code to change the frequency.

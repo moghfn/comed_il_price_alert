@@ -69,7 +69,7 @@ if not data:
 price = float(data[0]["price"])
 timestamp = pd.to_datetime(int(data[0]["millisUTC"]), unit="ms")
 
-print(f"[{timestamp}] Price: ${price:.2f}")
+print(f"[{timestamp}] Price: ¢{price:.2f}")
 
 # -------------------------
 # DETECT CHANGE
@@ -94,13 +94,13 @@ if ENABLED and price_changed and alert_type != last_alert:
     if alert_type == "HIGH":
         send_email(
             "HIGH PRICE ALERT",
-            f"Price crossed HIGH threshold\n\nPrice: ${price:.2f}\nThreshold: ${HIGH}"
+            f"Price crossed HIGH threshold\n\nPrice: ¢{price:.2f}\nThreshold: ¢{HIGH}"
         )
 
     elif alert_type == "LOW":
         send_email(
             "LOW PRICE ALERT",
-            f"Price crossed LOW threshold\n\nPrice: ${price:.2f}\nThreshold: ${LOW}"
+            f"Price crossed LOW threshold\n\nPrice: ¢{price:.2f}\nThreshold: ¢{LOW}"
         )
 
     # update last alert

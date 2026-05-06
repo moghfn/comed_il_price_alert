@@ -2,7 +2,7 @@ name: ComEd Price Monitor
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes (recommended)
+    - cron: "*/5 * * * *"   # every 5 minutes (recommended
   workflow_dispatch:        # manual run button
 
 permissions:
